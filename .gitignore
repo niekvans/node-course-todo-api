@@ -1,0 +1,3 @@
+# Exclude from GIT repository
+
+node_modules
