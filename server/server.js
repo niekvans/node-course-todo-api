@@ -34,7 +34,7 @@ app.get('/todos', (req, res) => {
 app.get('/todos/:id', (req, res) => {
     var id = req.params.id;
     if (!ObjectID.isValid(id)) {
-        console.log('Not valid ID');
+        // console.log('Not valid ID');
         return res.status(404).send();
     }
 
@@ -43,7 +43,7 @@ app.get('/todos/:id', (req, res) => {
             return res.status(200).send({todo});
         }
         else {
-            console.log('Valid but not found');
+            // console.log('Valid but not found');
             return res.status(404).send();
         }
     }).catch((error) => {

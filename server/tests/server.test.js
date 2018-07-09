@@ -19,7 +19,7 @@ const todos = [
 
 before((done) => {
     Todo.insertMany(todos, function (res) {
-        console.log(res);
+        // console.log(res);
     });
     done();
 });
@@ -32,13 +32,13 @@ beforeEach((done) => {
 });
 
 describe('POST /todos', () => {
-    it('Should create a new todo', (done) => {
-        setTimeout(done,15000);
+    it('Should create a new todo', function(done) {
+        this.timeout(15000);
         var text = 'This is testing a new todo';
 
         request(app)
             .post('/todos')
-            .send({ text: text })
+            .send({ text })
             .expect(200)
             .expect((res) => {
                 expect(res.body.text).toBe(text);
@@ -79,16 +79,44 @@ describe('GET /todos', () => {
             .get('/todos')
             .expect(200)
             .expect((res) => {
-                console.log(res.body);
-                // expect(res.body).toInclude({ text: "First todo message" });
+                // console.log(res.body);
+                // expect(res.body).to({text:"First todo message"});
             })
             .end(done);
     })
-})
+});
+
+
+describe('GET /todos/:id', () => {
+    it('should return todo doc', (done) => {
+        request(app)
+            .get('/todos/4edd40c86762e0fb12000003')
+            .expect(200)
+            .expect((res) => {
+                expect(res.body.todo.text).toBe('First todo message');
+            })
+            .end(done);
+    });
+
+    it('should return 404 if todo not found', (done) => {
+        request(app)
+            .get('/todos/4edd40c86762e0fb12000009')
+            .expect(404)
+            .end(done);
+    });
+
+    it('should return 404 for non object ids', (done) => {
+        request(app)
+            .get('/todos/1234')
+            .expect(404)
+            .end(done);
+    });
+});
 
 after((done) => {
     todos.forEach((item) => {
-        Todo.findOneAndRemove({ text: item.text }, function (result) {});
+        Todo.findOneAndRemove({ text: item.text }, function (result) { });
     })
     done();
-})
+});
+
