@@ -14,6 +14,12 @@ const todos = [
     {
         text: "Second todo message",
         _id: mongoose.Types.ObjectId('4edd40c86762e0fb12000004')
+    },
+    {
+        text: "Third todo message",
+        _id: mongoose.Types.ObjectId('4edd40c86762e0fb12000005'),
+        completed: true,
+        completedAt: 123445678
     }
 ];
 
@@ -130,7 +136,7 @@ describe('DELETE /todos/:id', () => {
                 Todo.findById(id).then((todo) => {
                     expect(todo).toBeNull();
                     done();
-                }).catch((error)=>{
+                }).catch((error) => {
                     done(error);
                 })
             });
@@ -149,11 +155,68 @@ describe('DELETE /todos/:id', () => {
             .expect(404)
             .end(done);
     });
-})
+});
+
+describe('PATCH /todos/id', () => {
+    it('should update the todo', (done) => {
+        var id = '4edd40c86762e0fb12000003';
+        var newText = 'New text after the patch';
+        request(app)
+            .patch(`/todos/${id}`)
+            .send({ text: newText, completed: true })
+            .expect(200)
+            .expect((res) => {
+                expect(res.body.todo.text).toBe(newText)
+            })
+            .end((err, res) => {
+                if (err) {
+                    return done(err);
+                }
+
+                Todo.findById(id).then((todo) => {
+                    expect(todo.text).toBe(newText);
+                    expect(todo.completed).toBe(true);
+                    expect(todo.completedAt).toBeGreaterThan(0);
+                    done();
+                }).catch((err) => {
+                    done(err);
+                });
+
+            });
+
+
+    });
+
+    it('should clear completedAt when todo is not completed', (done) => {
+        var id = '4edd40c86762e0fb12000005';
+        var newText = 'After the update';
+        request(app)
+            .patch(`/todos/${id}`)
+            .send({ text: newText })
+            .expect(200)
+            .expect((res) => {
+                expect(res.body.todo.text).toBe(newText);
+            })
+            .end((err, res) => {
+                if (err) {
+                    return done(err);
+                }
+
+                Todo.findById(id).then((todo) => {
+                    expect(todo.text).toBe(newText);
+                    expect(todo.completed).toBe(false);
+                    expect(todo.completedAt).toBeNull();
+                    done();
+                }).catch((err) => {
+                    done(err);
+                });
+            });
+    });
+});
 
 after((done) => {
     todos.forEach((item) => {
-        Todo.findOneAndRemove({ text: item.text }, function (result) { });
+        Todo.findByIdAndRemove(item._id, function (result) { });
     })
     done();
 });
