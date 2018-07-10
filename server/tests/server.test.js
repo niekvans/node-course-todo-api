@@ -32,7 +32,7 @@ beforeEach((done) => {
 });
 
 describe('POST /todos', () => {
-    it('Should create a new todo', function(done) {
+    it('Should create a new todo', function (done) {
         this.timeout(15000);
         var text = 'This is testing a new todo';
 
@@ -112,6 +112,44 @@ describe('GET /todos/:id', () => {
             .end(done);
     });
 });
+
+describe('DELETE /todos/:id', () => {
+    it('should remove a todo', (done) => {
+        var id = '4edd40c86762e0fb12000004';
+        request(app)
+            .delete(`/todos/${id}`)
+            .expect(200)
+            .expect((res) => {
+                expect(res.body.todo.text).toBe('Second todo message');
+            })
+            .end((err, res) => {
+                if (err) {
+                    return done(err);
+                }
+
+                Todo.findById(id).then((todo) => {
+                    expect(todo).toBeNull();
+                    done();
+                }).catch((error)=>{
+                    done(error);
+                })
+            });
+    });
+
+    it('should return 404 if todo not found', (done) => {
+        request(app)
+            .delete('/todos/5b446fe4496ba24be01e508c')
+            .expect(404)
+            .end(done);
+    });
+
+    it('should return 404 if object id is invalid', (done) => {
+        request(app)
+            .delete('/todos/12345abc')
+            .expect(404)
+            .end(done);
+    });
+})
 
 after((done) => {
     todos.forEach((item) => {
