@@ -1,3 +1,14 @@
+var env = process.env.NODE_ENV || 'development';
+const nodeEnvFIle = require('node-env-file');
+
+if (env === 'development') {
+    nodeEnvFIle(__dirname + '/../config/.env_dev');
+} else if (env === 'test') {
+    nodeEnvFIle(__dirname + './../config/.env_test');
+} else if (env === 'production') {
+    nodeEnvFIle(__dirname + './../config/.env_prd');
+}
+
 var express = require('express');
 var bodyParser = require('body-parser');
 const { ObjectID } = require('mongodb');
@@ -96,9 +107,22 @@ app.patch('/todos/:id', (req, res) => {
     }).catch((error) => {
         res.status(400).send();
     })
-
-
 });
+
+app.post('/users', (req, res) => {
+    var body = _.pick(req.body,['email', 'password']);
+    var user = new User(body);
+
+    user.save().then(() => {
+        return user.generateAuthToken();
+    }).then((token)=>{
+        res.header('x-auth',token).send(user);
+    })
+    .catch((error) => {
+        console.log(error);
+        res.status(400).send(error);
+    })
+})
 
 app.listen(port, () => {
     console.log(`Started on port ${port}`);
