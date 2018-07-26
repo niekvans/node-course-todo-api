@@ -40,7 +40,7 @@ app.get('/todos', (req, res) => {
     Todo.find().then((todos) => {
         res.send(todos);
     }).catch((error) => {
-        console.log('Could not fetch todos', error);
+        // console.log('Could not fetch todos', error);
         res.status(400).send(error);
     });
 });
@@ -120,7 +120,7 @@ app.post('/users', (req, res) => {
         res.header('x-auth', token).send(user);
     })
         .catch((error) => {
-            console.log(error);
+            // console.log(error);
             res.status(400).send(error);
         })
 });

@@ -4,38 +4,11 @@ var mongoose = require('mongoose');
 
 const { app } = require('./../server');
 const { Todo } = require('./../models/todo');
+const { User } = require('./../models/user');
+const { todos, populateTodos, users, populateUsers } = require('./seed/seed');
 
-var idList = [];
-const todos = [
-    {
-        text: "First todo message",
-        _id: mongoose.Types.ObjectId('4edd40c86762e0fb12000003')
-    },
-    {
-        text: "Second todo message",
-        _id: mongoose.Types.ObjectId('4edd40c86762e0fb12000004')
-    },
-    {
-        text: "Third todo message",
-        _id: mongoose.Types.ObjectId('4edd40c86762e0fb12000005'),
-        completed: true,
-        completedAt: 123445678
-    }
-];
-
-before((done) => {
-    Todo.insertMany(todos, function (res) {
-        // console.log(res);
-    });
-    done();
-});
-
-beforeEach((done) => {
-    idList.forEach((id) => {
-        Todo.findByIdAndRemove(id, () => { });
-    });
-    done();
-});
+beforeEach(populateUsers);
+beforeEach(populateTodos);
 
 describe('POST /todos', () => {
     it('Should create a new todo', function (done) {
@@ -48,7 +21,7 @@ describe('POST /todos', () => {
             .expect(200)
             .expect((res) => {
                 expect(res.body.text).toBe(text);
-                idList.push(res.body._id);
+
             })
             .end((err, res) => {
                 if (err) {
@@ -214,10 +187,86 @@ describe('PATCH /todos/id', () => {
     });
 });
 
-after((done) => {
-    todos.forEach((item) => {
-        Todo.findByIdAndRemove(item._id, function (result) { });
-    })
-    done();
+describe('GET /users/me', () => {
+    it('should return user if authenticated', (done) => {
+        request(app)
+            .get('/users/me')
+            .set('x-auth', users[0].tokens[0].token)
+            .expect(200)
+            .expect((result) => {
+                expect(result.body._id).toBe(users[0]._id.toHexString());
+                expect(result.body.email).toBe(users[0].email);
+            })
+            .end(done);
+    });
+
+    it('should return a 401 when not authenticated', (done) => {
+        request(app)
+            .get('/users/me')
+            .expect(401)
+            .expect((result) => {
+                expect(result.body).toEqual({})
+            })
+            .end(done);
+    });
 });
 
+describe('POST /users', () => {
+    it('should create a new user', (done) => {
+        var email = 'niek_post@niek.nl';
+        var password = 'something';
+        request(app)
+            .post('/users')
+            .send({ email, password })
+            .expect(200)
+            .expect((res) => {
+                expect(res.body.email).toBe('niek_post@niek.nl');
+                expect(res.headers['x-auth']).toBeTruthy();
+                expect(res.body._id).toBeTruthy();
+            })
+            .end((error) => {
+                if (error) {
+                    return done(error);
+                }
+
+                User.findOne({ email }).then((user) => {
+                    expect(user.email).toBe(email);
+                    expect(user.password).toEqual(expect.not.stringMatching(password));
+                    done();
+                })
+            });
+    });
+
+    it('should return validation error for wrong email', (done) => {
+        var email = 'niek.niek.nl';
+        var password = 'sjfkej1243j!';
+
+        request(app)
+            .post('/users')
+            .send({ email, password })
+            .expect(400)
+            .end(done);
+    });
+
+    it('should return validation error for short password', (done) => {
+        var email = 'someone@me.nl';
+        var password = '1';
+
+        request(app)
+            .post('/users')
+            .send({ email, password })
+            .expect(400)
+            .end(done);
+    });
+
+    it('should return validation error for user in use',(done)=>{
+        request(app)
+        .post('/users')
+        .send({
+            email: users[0].email,
+            password: 'somepasshere@#!'
+        })
+        .expect(400)
+        .end(done);
+    })
+});
