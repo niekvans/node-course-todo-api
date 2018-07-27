@@ -233,7 +233,7 @@ describe('POST /users', () => {
                     expect(user.email).toBe(email);
                     expect(user.password).toEqual(expect.not.stringMatching(password));
                     done();
-                }).catch((error)=>{
+                }).catch((error) => {
                     done(error);
                 })
             });
@@ -287,7 +287,7 @@ describe('POST /users/login', () => {
                 expect(res.body.email).toBe(users[1].email);
                 expect(res.body._id).toBeTruthy();
             })
-            .end((error,res) => {
+            .end((error, res) => {
                 if (error) {
                     return done(error);
                 }
@@ -313,12 +313,32 @@ describe('POST /users/login', () => {
             .expect((res) => {
                 expect(res.headers['x-auth']).toBeUndefined();
             })
-            .end((error,res) => {
+            .end((error, res) => {
                 if (error) {
                     return done(error);
                 }
 
                 User.findById(users[1]._id).then((user) => {
+                    expect(user.tokens.length).toBe(0);
+                    done();
+                }).catch((error) => {
+                    done(error);
+                })
+            });
+    });
+});
+
+describe('DELETE /users/me/token', () => {
+    it('should remove auth token on logout', (done) => {
+        request(app)
+            .delete('/users/me/token')
+            .set('x-auth', users[0].tokens[0].token)
+            .expect(200)
+            .end((error) => {
+                if (error) {
+                    return done(error);
+                }
+                User.findById(users[0]._id).then((user) => {
                     expect(user.tokens.length).toBe(0);
                     done();
                 }).catch((error) => {
