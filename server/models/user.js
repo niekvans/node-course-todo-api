@@ -75,9 +75,9 @@ UserSchema.statics.findByToken = function (token) {
 UserSchema.pre('save', function (next) {
     var user = this;
 
-    if(user.isModified('password')){
-        bcrypt.genSalt(10,(error,salt)=>{
-            bcrypt.hash(user.password, salt,(error,hash)=>{
+    if (user.isModified('password')) {
+        bcrypt.genSalt(10, (error, salt) => {
+            bcrypt.hash(user.password, salt, (error, hash) => {
                 user.password = hash;
                 next();
             });
@@ -87,6 +87,27 @@ UserSchema.pre('save', function (next) {
         next();
     }
 });
+
+UserSchema.statics.findByCredentials = function (email, password) {
+    var User = this;
+    return User.findOne({ email }).then((user) => {
+        if (!user) {
+            console.log('No user in DB');
+            return Promise.reject();
+        }
+
+        return new Promise((resolve, reject) => {
+            bcrypt.compare(password, user.password, (error, equal) => {
+                if (equal) {
+                    resolve(user);
+                }
+                else {
+                    reject();
+                }
+            })
+        });
+    });
+};
 
 var User = mongoose.model('User', UserSchema);
 
