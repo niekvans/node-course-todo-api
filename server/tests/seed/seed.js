@@ -20,22 +20,29 @@ const users = [
     {
         _id: userTwoId,
         email: 'niek2@niek.nl',
-        password: 'userTwoPass'
+        password: 'userTwoPass',
+        tokens: [{
+            access: 'auth',
+            token: jwt.sign({ _id: userTwoId, access: 'auth' },'abc123').toString()
+        }]
     }
 ]
 
 const todos = [
     {
         text: "First todo message",
-        _id: mongoose.Types.ObjectId('4edd40c86762e0fb12000003')
+        _id: mongoose.Types.ObjectId('4edd40c86762e0fb12000003'),
+        _creator: userOneId
     },
     {
         text: "Second todo message",
-        _id: mongoose.Types.ObjectId('4edd40c86762e0fb12000004')
+        _id: mongoose.Types.ObjectId('4edd40c86762e0fb12000004'),
+        _creator: userTwoId
     },
     {
         text: "Third todo message",
         _id: mongoose.Types.ObjectId('4edd40c86762e0fb12000005'),
+        _creator: userOneId,
         completed: true,
         completedAt: 123445678
     }
